@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game">
+    <h1>Tic-Tac-Toe</h1>
+    <section class="scoreboard" aria-label="Game scores">
+      <div class="score-item">
+        <span class="score-label">Player X</span>
+        <span id="score-x" class="score-value">0</span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">Draws</span>
+        <span id="score-draw" class="score-value">0</span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">Player O</span>
+        <span id="score-o" class="score-value">0</span>
+      </div>
+    </section>
+    <div class="mode-row">
+      <label for="game-mode">Game Mode</label>
+      <select id="game-mode" class="mode-select">
+        <option value="pvp">2 Players (Online)</option>
+        <option value="cpu">Vs Computer</option>
+      </select>
+    </div>
+    <section id="online-panel" class="online-panel" aria-label="Online multiplayer">
+      <div class="online-row">
+        <input id="room-input" class="room-input" type="text" maxlength="12" placeholder="Room code">
+        <button id="create-room" class="online-btn" type="button">Create</button>
+        <button id="join-room" class="online-btn" type="button">Join</button>
+        <button id="leave-room" class="online-btn online-btn-muted" type="button">Leave</button>
+      </div>
+      <p id="online-status" class="online-status">Not connected</p>
+      <p id="server-address" class="server-address"></p>
+    </section>
+    <p id="status" class="status">Player X's turn</p>
+
+    <section class="board" aria-label="Tic-Tac-Toe board">
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+      <button class="cell" data-cell></button>
+    </section>
+
+    <div class="controls">
+      <button id="restart" class="restart">Restart Game</button>
+      <button id="reset-scores" class="reset-scores" type="button">Reset Scores</button>
+      <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="true">Sound: On</button>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
