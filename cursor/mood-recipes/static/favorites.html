@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your favorites</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Georgia", "Cambria", "serif"],
+              sans: ["system-ui", "Segoe UI", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-rose-100 text-slate-800">
+    <div class="mx-auto max-w-2xl px-4 py-10">
+      <nav class="mb-6 flex flex-wrap items-center justify-center gap-3 text-sm md:justify-end">
+        <a href="/" class="rounded-full border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+          >Home</a
+        >
+        <a
+          href="/login"
+          id="nav-login"
+          class="rounded-full border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+          >Login</a
+        >
+        <span id="nav-user" class="hidden text-slate-600"></span>
+        <button
+          type="button"
+          id="nav-logout"
+          class="hidden rounded-full border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Log out
+        </button>
+      </nav>
+
+      <header class="mb-8 text-center">
+        <h1 class="font-display text-3xl font-semibold tracking-tight text-slate-900">Favorite recipes</h1>
+        <p class="mt-2 text-sm text-slate-600">Saved moods and when you saved them.</p>
+      </header>
+
+      <div
+        id="error"
+        class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        role="alert"
+      ></div>
+
+      <p id="empty" class="hidden text-center text-slate-600">No favorites yet. Save recipes from the home page.</p>
+
+      <ul id="favorites-list" class="space-y-4" aria-label="Favorite recipes"></ul>
+    </div>
+    <script src="/favorites.js"></script>
+  </body>
+</html>
