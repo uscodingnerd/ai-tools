@@ -218,8 +218,15 @@ async def handler(ws):
 
 
 async def main():
-    async with websockets.serve(handler, "0.0.0.0", 8765):
-        print("WebSocket server running on ws://localhost:8765")
+    # Newer websockets versions may enforce origin checks more strictly.
+    # Allow local browser origins used by this project and non-browser clients.
+    allowed_origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        None,
+    ]
+    async with websockets.serve(handler, "0.0.0.0", 8765, origins=allowed_origins):
+        print("WebSocket server running on ws://localhost:8765", flush=True)
         await asyncio.Future()
 
 
