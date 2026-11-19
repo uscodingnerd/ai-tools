@@ -1,0 +1,28 @@
+{
+  "AIJobs": [
+    {
+      "PutRequest": {
+        "Item": {
+          "JobRequirements": {
+            "S": "- 3+ years of relevant experience (MANDATORY)\n- Bachelor's degree in CS or related field\n- Python, JavaScript, or similar languages\n- SQL and database experience\n- AWS/GCP/Azure cloud platform\n- Git/version control\n- Strong communication skills"
+          },
+          "JobTitle": {
+            "S": "Software Engineer"
+          }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "JobRequirements": {
+            "S": "- 3+ years of experience in AI/ML engineering (MANDATORY)\n- Bachelor's or Master's degree in CS, AI, or related field\n- Proficiency in Python and ML frameworks (TensorFlow, PyTorch, or similar)\n- Experience with LLMs, prompt engineering, or fine-tuning models\n- Familiarity with MLOps and model deployment pipelines\n- AWS/GCP/Azure cloud platform (SageMaker, Vertex AI, or similar)\n- Strong understanding of data preprocessing and feature engineering\n- Git/version control\n- Strong communication skills"
+          },
+          "JobTitle": {
+            "S": "AI Engineer"
+          }
+        }
+      }
+    }
+  ]
+}
