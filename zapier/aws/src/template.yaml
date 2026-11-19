@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  AI Jobs API - REST API Gateway "jobs" -> Lambda "GetAIJobs" -> DynamoDB "AIJobs".
+  Reverse-engineered from the live resources in us-west-2 (read-only export, 2026-11-18).
+
+Parameters:
+  TableName:
+    Type: String
+    Default: AIJobs
+    Description: DynamoDB table name (change it if deploying next to the existing table).
+  FunctionName:
+    Type: String
+    Default: GetAIJobs
+  ApiName:
+    Type: String
+    Default: jobs
+  StageName:
+    Type: String
+    Default: Prod
+
+Resources:
+  # ---------------------------------------------------------------- DynamoDB
+  AIJobsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      BillingMode: PAY_PER_REQUEST
+      TableClass: STANDARD
+      AttributeDefinitions:
+        - AttributeName: JobTitle
+          AttributeType: S
+      KeySchema:
+        - AttributeName: JobTitle
+          KeyType: HASH
+
+  # ---------------------------------------------------------------- IAM
+  GetAIJobsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${FunctionName}:*
+        - PolicyName: ddb
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                Resource: !GetAtt AIJobsTable.Arn
+
+  # ---------------------------------------------------------------- Lambda
+  GetAIJobsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Runtime: python3.14
+      Handler: index.lambda_handler
+      Role: !GetAtt GetAIJobsRole.Arn
+      Timeout: 3
+      MemorySize: 128
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref AIJobsTable
+      Code:
+        # Same as src/lambda_function.py, except the table name comes from TABLE_NAME.
+        ZipFile: |
+          import json
+          import os
+          import boto3
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ.get('TABLE_NAME', 'AIJobs'))
+
+          def lambda_handler(event, context):
+              position = event.get('queryStringParameters', {}) or {}
+              position = position.get('position', '').strip()
+
+              if position:
+                  response = table.get_item(
+                      Key={'JobTitle': position}
+                  )
+                  item = response.get('Item')
+
+                  if not item:
+                      return {
+                          'statusCode': 404,
+                          'body': json.dumps({'error': f"Position '{position}' not found"})
+                      }
+
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({'job_requirement': item['JobRequirements']})
+                  }
+
+              # No position param - return all jobs
+              response = table.scan()
+              items = response.get('Items', [])
+
+              jobs = [
+                  {
+                      'job_title': item['JobTitle'],
+                      'job_requirement': item['JobRequirements']
+                  }
+                  for item in items
+              ]
+
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps(jobs)
+              }
+
+  # ---------------------------------------------------------------- API Gateway
+  JobsApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Ref ApiName
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  JobsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref JobsApi
+      ResourceId: !GetAtt JobsApi.RootResourceId
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.position: true
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseModels:
+            application/json: Empty
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAIJobsFunction.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        TimeoutInMillis: 29000
+
+  JobsDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: JobsGetMethod
+    Properties:
+      RestApiId: !Ref JobsApi
+
+  JobsStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref JobsApi
+      DeploymentId: !Ref JobsDeployment
+      StageName: !Ref StageName
+      TracingEnabled: false
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetAIJobsFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${JobsApi}/*/GET/
+
+Outputs:
+  ApiUrl:
+    Description: Invoke URL (add ?position=AI%20Engineer for a single job)
+    Value: !Sub https://${JobsApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/
+  TableArn:
+    Value: !GetAtt AIJobsTable.Arn
+  FunctionArn:
+    Value: !GetAtt GetAIJobsFunction.Arn
